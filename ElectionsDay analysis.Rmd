@@ -1,0 +1,25 @@
+---
+title: "Inauguration's Day"
+author: "Jose Luis Delgado Davara (@jldelda)"
+date: "Sunday, January 29, 2017"
+output: html_document
+---
+
+```{r libraries}
+library(RSentiment)
+library(dplyr)
+```
+
+```{r Read data}
+df = read.csv("sentiment2.csv")
+df = df[ ,2:30] #Remove carto id column
+#Filter only english twits
+df = df %>% filter(twitter_lang == "en") #Filter only twits in english
+```
+
+## Sentiment analysis
+```{r}
+df$Score = calculate_score(df$body)
+df$Sentiment = calculate_sentiment(df$body[])
+df$Total_presence_Sentiment = calculate_total_presence_sentiment(df$body[])
+```   
