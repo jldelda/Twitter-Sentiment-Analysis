@@ -5,21 +5,44 @@ date: "Sunday, January 29, 2017"
 output: html_document
 ---
 
+### Import libraries
 ```{r libraries}
-library(RSentiment)
+library(tidytext)
+library(stringr)
 library(dplyr)
 ```
 
 ```{r Read data}
 df = read.csv("sentiment2.csv")
-df = df[ ,2:30] #Remove carto id column
+#df = df[ ,2:30]#Remove carto id column
+df = data.frame(df)
 #Filter only english twits
 df = df %>% filter(twitter_lang == "en") #Filter only twits in english
+df$body = as.character(df$body) # Convert the tweet in text (not factor)
 ```
 
 ## Sentiment analysis
 ```{r}
-df$Score = calculate_score(df$body)
-df$Sentiment = calculate_sentiment(df$body[])
-df$Total_presence_Sentiment = calculate_total_presence_sentiment(df$body[])
+review_words <- df %>%
+  select(cartodb_id, body) %>%
+  unnest_tokens(word, body) %>% #Tokenize the twits
+  filter(!word %in% stop_words$word, 
+         str_detect(word, "^[a-z']+$")) #Remove stop words, hashtags and mentions
+
+AFINN <- sentiments %>% # Take the lexicon AFINN
+  filter(lexicon == "AFINN") %>%
+  select(word, afinn_score = score)
+
+# Inner join between the tokenized tweets and the lexicon
+reviews_sentiment <- review_words %>%
+  inner_join(AFINN, by = "word") %>%
+  group_by(cartodb_id) %>% #group and get mean afinn score by tweet 
+  summarize(sentiment = mean(afinn_score))
+
+## Join results with big dataset
+Tweet_sentiment = merge(df, reviews_sentiment, by = 'cartodb_id')
+
+Tweet_sentiment$pos_neg <- ifelse((Tweet_sentiment$sentiment > 0), 1, 
++    ifelse((Tweet_sentiment$sentiment < 0), -1,
++    ifelse((Tweet_sentiment$sentiment = 0), 0)))
 ```   
