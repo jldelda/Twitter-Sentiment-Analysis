@@ -39,10 +39,11 @@ reviews_sentiment <- review_words %>%
   group_by(cartodb_id) %>% #group and get mean afinn score by tweet 
   summarize(sentiment = mean(afinn_score))
 
+reviews_sentiment$pos_neg <- ifelse((reviews_sentiment$sentiment > 0), 1, 
++    ifelse((reviews_sentiment$sentiment < 0), -1, 0))
+
 ## Join results with big dataset
 Tweet_sentiment = merge(df, reviews_sentiment, by = 'cartodb_id')
-
-Tweet_sentiment$pos_neg <- ifelse((Tweet_sentiment$sentiment > 0), 1, 
-+    ifelse((Tweet_sentiment$sentiment < 0), -1,
-+    ifelse((Tweet_sentiment$sentiment = 0), 0)))
+Tweet_sentiment = Tweet_sentiment[,2:32] #Remove cartodb_id to avoid future conflicts
+write.csv(Tweet_sentiment, file = "Tweet_sentiment.csv",row.names=TRUE)
 ```   
